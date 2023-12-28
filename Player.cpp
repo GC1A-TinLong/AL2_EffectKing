@@ -1,18 +1,31 @@
 #include "Player.h"
 Player::Player() {
-	pos_ = { 340.0f, 360.0f };
-	size_ = { 30,30 };
-	spd_ = 10.0f;
-	color_ = WHITE;
+	bullet = new Bullet;
+
+	pos_ = { 640.0f, 360.0f };
+	size_ = { 40,40 };
+	spd_ = 3.0f;
+	color_ = 0x0000AAFF;
+
+	vector = { 0,0 };
+	mouseDistance = 0;
+}
+Player::~Player() {
+	delete bullet;
 }
 
 void Player::Initialization() {
-	pos_ = { 340.0f, 360.0f };
-	size_ = { 30,30 };
-	spd_ = 10.0f;
-	color_ = WHITE;
+	pos_ = { 640.0f, 360.0f };
+	size_ = { 40,40 };
+	spd_ = 3.0f;
+	color_ = 0x000088FF;
+
+	vector = { 0,0 };
+	mouseDistance = 0;
+
+	effect = None;
 }
-void Player::Control(char* keys,char*preKeys) {
+void Player::Control(char* keys) {
 	if (keys[DIK_W] || keys[DIK_UPARROW]) {
 		pos_.y -= spd_;
 	}
@@ -25,13 +38,22 @@ void Player::Control(char* keys,char*preKeys) {
 	if (keys[DIK_D] || keys[DIK_RIGHTARROW]) {
 		pos_.x += spd_;
 	}
+}
 
-	if (keys[DIK_R] && !preKeys[DIK_R]) {
-		Initialization();
-	}
+void Player::ChargingShot(Vector2i &mouse) {
+	vector.x = (float)mouse.x;
+	vector.y = (float)mouse.y;
+
+	Normalization(vector, pos_, mouseDistance);
+	bullet->pos.x += vector.x * bullet->spd;
+	bullet->pos.y += vector.y * bullet->spd;
 }
 
 void Player::Draw()
 {
 	Novice::DrawEllipse((int)pos_.x, (int)pos_.y, size_.w, size_.h, 0, color_, kFillModeSolid);
+}
+void Player::ChargeShotDraw()
+{
+	Novice::DrawEllipse(int(bullet->pos.x), int(bullet->pos.y), bullet->radius, bullet->radius, 0, bullet->color, kFillModeSolid);
 }

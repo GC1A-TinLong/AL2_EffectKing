@@ -12,3 +12,25 @@ struct Size {
 	int w;
 	int h;
 };
+
+enum Mode {
+	NoBlend,
+	Normal,
+	Add,
+	Subtract,
+	Multiply,
+	Screen,
+};
+enum Area {
+	Top,
+	Bottom,
+	Left,
+	Right,
+};
+enum Effect {
+	None,
+	Bloom,
+	Charge,
+	Wave,
+	ChargeShot,
+};

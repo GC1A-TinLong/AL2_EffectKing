@@ -6,25 +6,7 @@
 #include <Novice.h>
 #include <Struct.h>
 #include <Function.h>
-
-enum Mode {
-	None,
-	Normal,
-	Add,
-	Subtract,
-	Multiply,
-	Screen,
-};
-enum Area {
-	Top,
-	Bottom,
-	Left,
-	Right,
-};
-enum Effect {
-	Bloom,
-	Charge,
-};
+#include "Player.h"
 
 class Particle
 {
@@ -53,15 +35,26 @@ public:
 	unsigned int A;
 	int randRadius;
 
+	float theta;
+	float amplitude;
+	float waveSpd;
+	int randWaveDirection;
+	Vector2 wavePos;
+	Vector2 tempPos;
+
 	int bufStart_;
 	int spawnStart_;
 	int effectStart_;
 	int bloomStart_;
 
 	void Initialization();
+
 	void Blooming(Vector2 &pos);
-	void Charging();
-	void Spawning(Vector2i& mouse);
+	void Charging(Vector2 &pos);
+	void MouseCharging(Vector2 &pos);
+	void Spawning(Vector2 &pos);
+	void SpawnOfWave(Player& player);
+	void Waving	 (Player &player);
 
 	/// <summary>
 	/// Start from emitter

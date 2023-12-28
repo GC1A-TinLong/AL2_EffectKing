@@ -35,6 +35,13 @@ Particle::Particle() {
 	B <<= 8;
 	A = 0x000000FF;
 	color_ = R + G + B + A;
+
+	theta = 0;
+	amplitude = 50.0f;
+	waveSpd = 6.0f;
+	randWaveDirection = 0;
+	wavePos = { 0,0 };
+	tempPos = { 0,0 };
 }
 void Particle::Initialization() {
 	emitter_.x = -1000;
@@ -66,6 +73,13 @@ void Particle::Initialization() {
 	A = 0x000000FF;
 	color_ = R + G + B + A;
 	randRadius = 0;
+
+	theta = 0;
+	amplitude = 30.0f;
+	waveSpd = 5.5f;
+	randWaveDirection = 0;
+	wavePos = { 0,0 };
+	tempPos = { 0,0 };
 }
 Particle::~Particle() {}
 
@@ -99,7 +113,7 @@ void Particle::Blooming(Vector2& pos) {
 		vector_.y = RandOutput(-50, 50, vector_.y) + emitter_.y;
 		Normalization(vector_, emitter_);
 
-		VoidRand(5, 30, randRadius);
+		VoidRand(5, 18, randRadius);
 
 		randColor = rand() % 2;
 		if (randColor == 0) {
@@ -142,8 +156,13 @@ void Particle::Blooming(Vector2& pos) {
 	}
 }
 
-void Particle::Charging()
+void Particle::Charging(Vector2& pos)
 {
+	emitter_.x = pos.x;
+	emitter_.y = pos.y;
+	vector_.x = pos_.x;
+	vector_.y = pos_.y;
+	Normalization_toEmitter(vector_, emitter_);
 	if (effectStart_ == 1) {
 		pos_.x += vector_.x * spd_;
 		pos_.y += vector_.y * spd_;
@@ -151,7 +170,7 @@ void Particle::Charging()
 			A += 10;
 		}
 		color_ = R + G + B + A;
-		if (A >= 0x000000FF-10) {
+		if (A >= 0x000000FF - 10) {
 			A = 0x000000FF;
 		}
 	}
@@ -159,14 +178,39 @@ void Particle::Charging()
 		effectStart_ = 0;
 	}
 }
-	
-void Particle::Spawning(Vector2i& mouse)
+void Particle::MouseCharging(Vector2& pos)
+{
+	emitter_.x = pos.x;
+	emitter_.y = pos.y;
+	vector_.x = pos_.x;
+	vector_.y = pos_.y;
+	Normalization_toEmitter(vector_, emitter_);
+	if (effectStart_ == 1) {
+		pos_.x += vector_.x * spd_;
+		pos_.y += vector_.y * spd_;
+		if (A < 0x000000FE) {
+			A += 3;
+		}
+		color_ = R + G + B + A;
+		if (A >= 0x000000FF - 3) {
+			A = 0x000000FF;
+		}
+	}
+	if (fabsf(pos_.x - emitter_.x) <= spd_ && fabsf(pos_.y - emitter_.y) <= spd_) {
+		pos_.x = -1000;
+	}
+}
+
+void Particle::Spawning(Vector2& pos)
 {
 	const int kRandNum = 100;
 	const int kAdjustNum = 20;
+
+	VoidRand(5, 18, randRadius);
+
 	if (spawnStart_ == 1) {
-		emitter_.x = (float)mouse.x;
-		emitter_.y = (float)mouse.y;
+		emitter_.x = pos.x;
+		emitter_.y = pos.y;
 		VoidRand(0, 3, randArea);
 		switch (randArea) {
 		case Top:
@@ -189,9 +233,7 @@ void Particle::Spawning(Vector2i& mouse)
 			pos_.y = emitter_.y + RandOutput(-kRandNum, kRandNum, randSpawnPos_.y);
 			break;
 		}
-		vector_.x = pos_.x;
-		vector_.y = pos_.y;
-		Normalization_toEmitter(vector_, emitter_);
+
 
 		randColor = rand() % 2;
 		if (randColor == 0) {
@@ -210,17 +252,78 @@ void Particle::Spawning(Vector2i& mouse)
 			G <<= 16;
 			B <<= 8;
 		}
-		/*R = rand() % 255;
-		G = rand() % 255;
-		B = rand() % 255;
-		R <<= 24;
-		G <<= 16;
-		B <<= 8;*/
+		
 		A = 0x00000055;
 		color_ = R + G + B + A;
 		//color_ =WHITE;
 
 		effectStart_ = 1;
+	}
+}
+
+void Particle::SpawnOfWave(Player& player)
+{
+	if (resetTimer_ == 0) {
+		emitter_.x = player.pos_.x;
+		emitter_.y = player.pos_.y;
+		randSpawnPos_.x = RandOutput(-40, 40, randSpawnPos_.x);
+		pos_.x = emitter_.x + randSpawnPos_.x;
+		pos_.y = emitter_.y + RandOutput(-30, 20, randSpawnPos_.y) + 20.0f;
+
+		VoidRand(5, 18, randRadius);
+		VoidRand(0, 1, randWaveDirection);
+
+		randColor = rand() % 2;
+		if (randColor == 0) {
+			R = 0xFF;
+			G = 0xFF;
+			B = 0xFF;
+			R <<= 24;
+			G <<= 16;
+			B <<= 8;
+		}
+		else {
+			R = 0x00;
+			G = 0x00;
+			B = 0x00;
+			R <<= 24;
+			G <<= 16;
+			B <<= 8;
+		}
+
+		A = 0x000000FF;
+		color_ = R + G + B + A;
+		//color_ = WHITE;
+
+		effectStart_ = 1;
+	}
+}
+
+void Particle::Waving(Player& player)
+{
+	if (effectStart_ == 1) {
+		resetTimer_++;
+		if (resetTimer_ == 1) {
+			tempPos = player.pos_;
+		}
+
+		if (randWaveDirection == 0) {
+			wavePos.x = -(sinf(theta) * amplitude);
+		}
+		else if (randWaveDirection == 1) {
+			wavePos.x = (sinf(theta) * amplitude);
+		}
+		theta += float(M_PI) / 20.0f;
+		pos_.x = tempPos.x + wavePos.x + randSpawnPos_.x;
+		pos_.y -= waveSpd;
+
+		A -= 4;
+		color_ = R + G + B + A;
+	}
+	if (A < 5) {
+		effectStart_ = 0;
+		resetTimer_ = 0;
+		A = 0x000000FF;
 	}
 }
 
@@ -265,7 +368,7 @@ void Particle::Draw(/*int handle, Mode mode*/) {
 void ModeSelect(char* keys, char* preKeys, Mode& mode)
 {
 	if (keys[DIK_1] && !preKeys[DIK_1]) {
-		mode = None;
+		mode = NoBlend;
 	}
 	if (keys[DIK_2] && !preKeys[DIK_2]) {
 		mode = Normal;
